@@ -1,100 +1,109 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useChat } from '@ai-sdk/react';
+import { useRef, useEffect } from 'react';
+import { Terminal, Send, Bot, User } from 'lucide-react';
+
+export default function Chat() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+    api: '/api/chat',
+    onError: (err) => console.error('Chat error:', err),
+  });
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const trimmedInput = typeof input === 'string' ? input.trim() : '';
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex flex-col h-screen bg-[#000000] text-[#E5E5E5] font-sans antialiased">
+      {/* Header */}
+      <header className="border-b border-[#1A1A1A] p-4 flex items-center justify-between bg-[#050505]">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-5 h-5 text-[#00FF66]" />
+          <span className="font-mono tracking-widest text-lg font-bold uppercase text-white">
+            Wiseman<span className="text-[#00FF66]">.exe</span>
+          </span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+          <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse"></span>
+          LOCAL_CORE_ONLINE
+        </div>
+      </header>
+
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 max-w-3xl w-full mx-auto">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4 opacity-60 mt-20">
+            <div className="p-4 rounded-full bg-[#0A0A0A] border border-[#1A1A1A]">
+              <Bot className="w-12 h-12 text-[#00FF66]" />
+            </div>
+            <h2 className="text-xl font-mono text-white">Wiseman Awaits Your Foolishness</h2>
+            <p className="text-sm max-w-md text-zinc-400 font-mono">
+              Ask a brilliant model a question, or state something obvious so it can humiliate your intellect.
+            </p>
+          </div>
+        ) : (
+          messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flex gap-4 p-4 rounded-lg border ${
+                m.role === 'user'
+                  ? 'bg-[#050505] border-[#1A1A1A]'
+                  : 'bg-[#0A0A0A] border-[#262626]'
+              }`}
+            >
+              <div className="flex-shrink-0 mt-0.5">
+                {m.role === 'user' ? (
+                  <User className="w-5 h-5 text-zinc-400" />
+                ) : (
+                  <Bot className="w-5 h-5 text-[#00FF66]" />
+                )}
+              </div>
+              <div className="flex-1 space-y-1 overflow-hidden">
+                <p className="text-xs font-mono tracking-wider uppercase text-zinc-500">
+                  {m.role === 'user' ? 'Peasant' : 'Wiseman'}
+                </p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-zinc-200">
+                  {m.content}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+        {isLoading && (
+          <div className="flex gap-2 items-center text-xs font-mono text-zinc-500 pl-4">
+            <span className="animate-bounce">●</span>
+            <span className="animate-bounce [animation-delay:0.2s]">●</span>
+            <span className="animate-bounce [animation-delay:0.4s]">●</span>
+            <span>Wiseman is formulating a roast...</span>
+          </div>
+        )}
+        {error && (
+          <p className="text-xs font-mono text-red-500 pl-4">Error: {error.message}</p>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <footer className="border-t border-[#1A1A1A] bg-[#050505] p-4">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
+          <input
+            className="w-full bg-[#0A0A0A] border border-[#1A1A1A] focus:border-[#00FF66] focus:outline-none rounded-xl py-3 pl-4 pr-12 text-sm font-mono placeholder-zinc-600 text-white transition-colors"
+            value={typeof input === 'string' ? input : ''}
+            placeholder="Type your message here, mortal..."
+            onChange={handleInputChange}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          <button
+            type="submit"
+            disabled={!trimmedInput || isLoading}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-[#111] hover:bg-[#1A1A1A] border border-[#222] disabled:opacity-30 text-[#00FF66] transition-colors"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </form>
       </footer>
     </div>
   );
